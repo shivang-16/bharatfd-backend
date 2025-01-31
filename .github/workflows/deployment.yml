@@ -14,11 +14,11 @@ jobs:
       - name: Login to docker hub
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push docker image
-        run: |
-          docker compose build web
-          docker tag bharatfd-web:latest shivangm16/bharatfd-backend:latest
-          docker push shivangm16/bharatfd-backend:latest
+      - name: Build docker image
+        run: docker build -t shivangm16/bharatfd-backend:latest .
+
+      - name: Publish image to docker hub
+        run: docker push shivangm16/bharatfd-backend:latest
 
   deploy:
     needs: build
@@ -27,20 +27,15 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v3
 
-      - name: Create env file
-        run: |
-          echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
-          echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
-          echo "PORT=4000" >> .env
+      - name: Pull image from docker hub
+        run: docker pull shivangm16/bharatfd-backend:latest
 
-      - name: Update docker-compose file
+      - name: Stop running containers
         run: |
-          sed -i 's|build: .|image: shivangm16/bharatfd-backend:latest|' docker-compose.yml
+          docker compose down || true
 
-      - name: Start containers
+      - name: Start containers with docker compose
         run: |
-          docker compose pull
-          docker compose down --volumes || true
           docker compose up -d
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
