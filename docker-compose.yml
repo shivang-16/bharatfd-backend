@@ -2,12 +2,13 @@ version: "3.8"
 
 services:
   web:
-    build: .
+    image: shivangm16/bharatfd-backend:latest
     ports:
       - "4000:4000"
     environment:
-      - MONGO_URI=mongodb://mongo:27017/faqdb
-      - REDIS_URL=redis://redis:6379
+      - MONGO_URI=${MONGO_URI}
+      - REDIS_URL=${REDIS_URL}
+      - PORT=${PORT}
     depends_on:
       - mongo
       - redis

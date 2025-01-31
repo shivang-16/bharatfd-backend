@@ -14,27 +14,35 @@ jobs:
       - name: Login to docker hub
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build docker image
-        run: docker build -t shivangm16/bharatfd-backend:latest .
-
-      - name: Publish image to docker hub
-        run: docker push shivangm16/bharatfd-backend:latest
+      - name: Build and push docker image
+        run: |
+          docker compose build web
+          docker tag bharatfd-web:latest shivangm16/bharatfd-backend:latest
+          docker push shivangm16/bharatfd-backend:latest
 
   deploy:
     needs: build
     runs-on: self-hosted
     steps:
-      - name: Pull image from docker hub
-        run: docker pull shivangm16/bharatfd-backend:latest
+      - name: Checkout source
+        uses: actions/checkout@v3
 
-      - name: Delete old container
+      - name: Create env file
         run: |
-          docker rm -f bharatfd || true
+          echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
+          echo "REDIS_URL=${{ secrets.REDIS_URL }}" >> .env
+          echo "PORT=4000" >> .env
 
-      - name: Run docker container
+      - name: Update docker-compose file
         run: |
-          docker run -d \
-            -p 4000:4000 \
-            --name bharatfd \
-            --restart unless-stopped \
-            shivangm16/bharatfd-backend:latest
+          sed -i 's|build: .|image: shivangm16/bharatfd-backend:latest|' docker-compose.yml
+
+      - name: Start containers
+        run: |
+          docker compose pull
+          docker compose down --volumes || true
+          docker compose up -d
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          PORT: 4000
