@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+  <head>
+    <title>FAQ Editor</title>
+    <link
+      href="https://cdn.quilljs.com/1.3.6/quill.snow.css"
+      rel="stylesheet"
+    />
+    <style>
+      .container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 0 20px;
+      }
+      #editor {
+        height: 300px;
+        margin-bottom: 20px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+      }
+      .spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        margin-left: 10px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        vertical-align: middle;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>FAQ Editor</h1>
+      <div class="form-group">
+        <label>Question:</label>
+        <input type="text" id="question" placeholder="Enter your question" />
+      </div>
+      <div class="form-group">
+        <label>Answer:</label>
+        <div id="editor"></div>
+      </div>
+      <button id="submitButton" onclick="submitFAQ()">
+        Create FAQ
+        <span id="spinner" class="spinner"></span>
+      </button>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script>
+      const quill = new Quill("#editor", {
+        theme: "snow",
+        modules: {
+          toolbar: [
+            ["bold", "italic", "underline", "strike"],
+            ["blockquote", "code-block"],
+            [{ header: 1 }, { header: 2 }],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ script: "sub" }, { script: "super" }],
+            [{ indent: "-1" }, { indent: "+1" }],
+            ["link", "image"],
+            ["clean"],
+          ],
+        },
+      });
+
+      async function submitFAQ() {
+        const submitButton = document.getElementById("submitButton");
+        const spinner = document.getElementById("spinner");
+        const question = document.getElementById("question").value;
+        const answer = quill.root.innerHTML;
+
+        if (!question || !answer) {
+          alert("Please fill in both question and answer fields");
+          return;
+        }
+
+        try {
+          submitButton.disabled = true;
+          submitButton.textContent = "Creating...";
+          spinner.style.display = "inline-block";
+
+          const response = await fetch("/api/faqs", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ question, answer }),
+          });
+
+          const data = await response.json();
+          if (response.ok) {
+            alert("FAQ created successfully!");
+            document.getElementById("question").value = "";
+            quill.setText("");
+          } else {
+            alert("Error creating FAQ: " + data.message);
+          }
+        } catch (error) {
+          alert("Error creating FAQ: " + error.message);
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = "Create FAQ";
+          spinner.style.display = "none";
+        }
+      }
+    </script>
+  </body>
+</html>
