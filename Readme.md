@@ -115,7 +115,7 @@ npm test
 Access the FAQ editor interface at:
 
 ```plaintext
-http://localhost:4000/
+http://localhost:8000/
 ```
 
 ## Deployment
@@ -123,7 +123,7 @@ http://localhost:4000/
 The application has been deployed on an AWS EC2 instance using GitHub Actions. You can access the live version at:
 
 ```plaintext
-http://15.206.191.142:4000/
+http://15.206.191.142:8000/
 ```
 
 Please note that the IP address above is the **public IPv4 address** of the EC2 instance, which is required to access the application externally.
